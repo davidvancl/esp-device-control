@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "Pairing.h"
+#include "System.h"
 #include "Tokens.h"
 #include "Transport.h"
 
@@ -186,6 +187,11 @@ void unpair(Session& session, JsonObjectConst msg) {
   revokeOthers(token, session.client);
 }
 
+void restart(Session& session, JsonObjectConst msg) {
+  ack(session, msg["seq"]);
+  System::requestRestart();
+}
+
 const Handler HANDLERS[] = {
   {"hello", false, hello},
   {"pair", false, pair},
@@ -193,6 +199,7 @@ const Handler HANDLERS[] = {
   {"get", true, getValues},
   {"set", true, setValue},
   {"unpair", true, unpair},
+  {"restart", true, restart},
 };
 
 }

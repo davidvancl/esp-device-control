@@ -2,7 +2,7 @@
 
 Control all ESP projects from one Android app over the local WiFi network. This document is the shared contract between the ESP library (`esp-device-control`) and the Android app. Both sides must follow it; any change to the protocol is made here first.
 
-Status: ESP library 0.1.0 implemented (protocol v1 without HMAC), integrated into project-ikarus; Android app not started.
+Status: ESP library 0.1.0 implemented (protocol v1 without HMAC), integrated into project-ikarus; Android app 0.1 implemented in `esp-control-app` (builds, protocol unit tests pass, not yet tested against hardware).
 
 ## Goals
 
@@ -83,6 +83,7 @@ A device exposes **values** identified by `id`. A value can be readable (`get`),
 | `pair` | – | `ack`, then `pairing` / `paired` messages |
 | `pin` | `pin` (string) | `ack` and `paired`, or `err` `auth`; only during pairing with `method` `pin` |
 | `unpair` | – | `ack`; the token used by this connection is removed |
+| `restart` | – | `ack`; the device restarts about 0.5 s later, all connections drop and the app reconnects |
 
 ```json
 {"t":"hello","seq":1,"proto":1,"token":"9f2c...e1"}
@@ -90,6 +91,7 @@ A device exposes **values** identified by `id`. A value can be readable (`get`),
 {"t":"set","seq":3,"id":"green","v":40}
 {"t":"pair","seq":4}
 {"t":"pin","seq":5,"pin":"4821"}
+{"t":"restart","seq":6}
 ```
 
 ### Device → app
@@ -165,13 +167,13 @@ The app implements one screen per `type`. Values not listed here are ignored by 
 
 | id | Access | Value | Meaning |
 |---|---|---|---|
-| `left2` | set | int 0–99 | first 2-digit display |
-| `right2` | set | int 0–99 | second 2-digit display |
-| `left4` | set | int 0–9999 | first 4-digit display |
-| `right4` | set | int 0–9999 | second 4-digit display |
-| `intensity` | set | int 0–15 | brightness of all displays |
-| `green` | set | int 0–100 (%) | green button LED |
-| `red` | set | int 0–100 (%) | red button LED |
+| `left2` | set | int 0–99 or `null` | first 2-digit display; `null` blanks it |
+| `right2` | set | int 0–99 or `null` | second 2-digit display; `null` blanks it |
+| `left4` | set | int 0–9999 or `null` | first 4-digit display; `null` blanks it |
+| `right4` | set | int 0–9999 or `null` | second 4-digit display; `null` blanks it |
+| `intensity` | get, set | int 0–15 | brightness of all displays (8 after boot) |
+| `green` | get, set | int 0–100 (%) | green button LED (100 after boot) |
+| `red` | get, set | int 0–100 (%) | red button LED (100 after boot) |
 | `key` | get | bool | key switch is on; also sent as `event` when it changes |
 | `greenButton` | event | `true` | green button pressed |
 | `redButton` | event | `true` | red button pressed |
@@ -227,6 +229,7 @@ Source layout:
 | `dc/Tokens` | token storage and validation |
 | `dc/Pairing` | pairing state machine (PIN / confirm) |
 | `dc/Registry` | registered getters and setters |
+| `dc/System` | device-level actions (restart) |
 | `dc/Platform` | ESP8266 / ESP32 differences (lock, random, chip id) |
 | `dc/Config` | limits and timeouts |
 
@@ -275,7 +278,7 @@ Gotchas:
 1. ~~Protocol and ESP library 0.1~~ – done.
 2. ~~Integrate into project-ikarus~~ – done; test on hardware with `websocat`, measure free heap together with the HTTPS calls to Slack / GitLab.
 3. Create the GitHub repository, tag `v0.1.0`, switch ikarus `lib_deps` from `symlink://` to the git URL.
-4. Android app 0.1: discovery, pairing, ikarus screen.
+4. ~~Android app 0.1: discovery, pairing, ikarus screen~~ – implemented; test on a phone against ikarus.
 5. HMAC challenge–response.
 6. Roll out to coin-jar, infinity-cube-lamp, then gitlab-pipeline-semaphor (add their tables to [Device types](#device-types)).
 7. Later: WiFi provisioning from the app (fallback access point), BLE transport for ESP32, remote access via MQTT.

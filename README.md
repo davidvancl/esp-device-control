@@ -10,6 +10,7 @@ The protocol, security model, device types and the plan for the Android app are 
 - WebSocket at `ws://<device>/ws` with JSON messages (protocol v1)
 - Values by id: readable, writable or both; events pushed to connected apps
 - Pairing with a PIN shown on the device, or confirmed on the device; nothing can be read or controlled without a token
+- Remote restart of the device from the app
 
 ## Installation
 
@@ -72,6 +73,7 @@ websocat ws://ikarus-a1b2c3.local/ws
 {"t":"pin","seq":3,"pin":"4821"}
 {"t":"get","seq":4}
 {"t":"set","seq":5,"id":"green","v":40}
+{"t":"restart","seq":6}
 ```
 
 After `paired` the connection is authorized; on the next connection send the received token in `hello`. An unauthenticated connection is closed after 10 s unless pairing is in progress.

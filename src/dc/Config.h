@@ -21,6 +21,7 @@ constexpr uint32_t PAIRING_TIMEOUT_MS = 60000;
 constexpr uint8_t PIN_ATTEMPTS = 3;
 constexpr uint32_t WIFI_RETRY_MS = 60000;
 constexpr uint32_t CLEANUP_MS = 1000;
+constexpr uint32_t RESTART_DELAY_MS = 500;
 
 }
 }

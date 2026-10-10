@@ -7,6 +7,7 @@
 #include "dc/Protocol.h"
 #include "dc/Registry.h"
 #include "dc/Sessions.h"
+#include "dc/System.h"
 #include "dc/Tokens.h"
 #include "dc/Transport.h"
 
@@ -98,6 +99,7 @@ void loop() {
   expirePairing();
   dropUnauthorized();
   cleanup();
+  System::loop();
 }
 
 void get(const char* id, Getter getter) {
