@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <functional>
+#include <vector>
 
 namespace DeviceControl {
 namespace Pairing {
@@ -10,7 +11,9 @@ enum class Method : uint8_t { None, Pin, Confirm };
 
 enum class PinResult : uint8_t { Accepted, Wrong, Rejected, Invalid };
 
-void usePin(std::function<void(const char*)> show, std::function<void()> hide);
+void usePin(std::function<void(const char*)> show, std::function<void()> hide, std::vector<const char*> symbols);
+
+const std::vector<const char*>& symbols();
 
 void useConfirm(std::function<void()> start, std::function<void()> stop);
 

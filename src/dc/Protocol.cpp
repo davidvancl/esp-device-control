@@ -152,6 +152,13 @@ void pair(Session& session, JsonObjectConst msg) {
   doc["state"] = "waiting";
   doc["method"] = Pairing::methodName();
   doc["timeout"] = Config::PAIRING_TIMEOUT_MS / 1000;
+  if (Pairing::method() == Pairing::Method::Pin) {
+    doc["length"] = Config::PIN_LENGTH;
+    if (!Pairing::symbols().empty()) {
+      JsonArray symbols = doc["symbols"].to<JsonArray>();
+      for (const char* symbol : Pairing::symbols()) symbols.add(symbol);
+    }
+  }
   sendTo(session.client, doc);
 
   Pairing::start(session.client);

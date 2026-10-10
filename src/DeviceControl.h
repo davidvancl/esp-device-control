@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <functional>
+#include <initializer_list>
 
 namespace DeviceControl {
 
@@ -21,7 +22,8 @@ void notify(const char* id);
 
 void notify(const char* id, JsonVariantConst value);
 
-void pairWithPin(std::function<void(const char* pin)> show, std::function<void()> hide);
+void pairWithPin(std::function<void(const char* pin)> show, std::function<void()> hide,
+                 std::initializer_list<const char*> symbols = {});
 
 void pairWithConfirm(std::function<void()> start, std::function<void()> stop);
 

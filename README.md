@@ -55,7 +55,8 @@ void loop() {
 | `set(id, setter)` / `set<T>(id, fn)` | expose a writable value; a JSON setter returns `false` to reject the value |
 | `notify(id)` | send the current value of `id` to connected apps |
 | `notify(id, value)` | send any value, e.g. `notify("greenButton", true)` |
-| `pairWithPin(show, hide)` | pairing with a PIN shown on the device |
+| `pairWithPin(show, hide)` | pairing with a 4-digit PIN shown on the device |
+| `pairWithPin(show, hide, {symbols...})` | PIN made of 2–10 symbols, e.g. colors `"#FF0000"`; `show` gets symbol indices as digits |
 | `pairWithConfirm(start, stop)` + `confirmPairing()` | pairing confirmed on the device |
 
 Getters and setters always run in the main loop. Ids are stored as pointers, pass string literals.

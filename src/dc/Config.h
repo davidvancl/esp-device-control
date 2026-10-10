@@ -13,6 +13,7 @@ constexpr size_t MAX_CLIENTS = 3;
 constexpr size_t MAX_TOKENS = 4;
 constexpr size_t TOKEN_LENGTH = 32;
 constexpr size_t PIN_LENGTH = 4;
+constexpr size_t MAX_PIN_SYMBOLS = 10;
 constexpr size_t MAX_MESSAGE = 512;
 constexpr size_t QUEUE_SIZE = 12;
 constexpr uint16_t KEEPALIVE_S = 15;

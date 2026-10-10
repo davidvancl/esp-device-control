@@ -11,6 +11,7 @@ namespace {
 Method current = Method::None;
 std::function<void(const char*)> showPin;
 std::function<void()> hidePin;
+std::vector<const char*> pinSymbols;
 std::function<void()> startConfirm;
 std::function<void()> stopConfirm;
 
@@ -22,10 +23,16 @@ char pin[Config::PIN_LENGTH + 1] = {};
 
 }
 
-void usePin(std::function<void(const char*)> show, std::function<void()> hide) {
+void usePin(std::function<void(const char*)> show, std::function<void()> hide, std::vector<const char*> symbols) {
   current = Method::Pin;
   showPin = show;
   hidePin = hide;
+  if (symbols.size() > Config::MAX_PIN_SYMBOLS) symbols.resize(Config::MAX_PIN_SYMBOLS);
+  pinSymbols = symbols.size() >= 2 ? symbols : std::vector<const char*>();
+}
+
+const std::vector<const char*>& symbols() {
+  return pinSymbols;
 }
 
 void useConfirm(std::function<void()> start, std::function<void()> stop) {
@@ -60,7 +67,9 @@ void start(uint32_t id) {
   startedAt = millis();
   attempts = 0;
   if (current == Method::Pin) {
-    snprintf(pin, sizeof(pin), "%04u", static_cast<unsigned>(randomWord() % 10000));
+    uint32_t base = pinSymbols.empty() ? 10 : pinSymbols.size();
+    for (size_t i = 0; i < Config::PIN_LENGTH; i++) pin[i] = '0' + randomWord() % base;
+    pin[Config::PIN_LENGTH] = '\0';
     if (showPin) showPin(pin);
   } else if (startConfirm) {
     startConfirm();

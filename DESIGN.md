@@ -2,7 +2,7 @@
 
 Control all ESP projects from one Android app over the local WiFi network. This document is the shared contract between the ESP library (`esp-device-control`) and the Android app. Both sides must follow it; any change to the protocol is made here first.
 
-Status: ESP library 0.1.0 implemented (protocol v1 without HMAC), integrated into project-ikarus; Android app 0.1 implemented in `esp-control-app` (builds, protocol unit tests pass, not yet tested against hardware).
+Status: ESP library 0.1.0 implemented (protocol v1 without HMAC), integrated into project-ikarus and coin-jar; Android app 0.1 implemented in `esp-control-app` (builds, protocol unit tests pass, not yet tested against hardware).
 
 ## Goals
 
@@ -103,7 +103,7 @@ A device exposes **values** identified by `id`. A value can be readable (`get`),
 | `ack` | – | request succeeded |
 | `err` | `code`, `msg` | request failed |
 | `event` | `values` (object `id → value`) | a value changed or something happened on the device (e.g. button pressed); sent to all **authenticated** clients |
-| `pairing` | `state` (`waiting`, `timeout`, `rejected`), `method` (`pin` or `confirm`, with `waiting`), `timeout` (seconds, with `waiting`) | pairing progress |
+| `pairing` | `state` (`waiting`, `timeout`, `rejected`); with `waiting` also `method` (`pin` or `confirm`), `timeout` (seconds), and for `pin` `length` (number of symbols) and optionally `symbols` | pairing progress |
 | `paired` | `token` | pairing succeeded |
 
 ```json
@@ -152,7 +152,13 @@ A device exposes **values** identified by `id`. A value can be readable (`get`),
   1. App sends `pair`.
   2. Device replies `ack` and `{"t":"pairing","state":"waiting","method":"pin","timeout":60}` (or `"method":"confirm"`), and starts pairing on its hardware.
   3. Depending on `method`:
-     - `pin` – devices with a display. The device shows a random 4-digit PIN (ikarus: on the first 4-digit display). The app asks the user for it and sends `{"t":"pin","pin":"4821"}`. Three wrong attempts end pairing with `rejected`.
+     - `pin` – the device shows a random PIN of `length` symbols and the app asks the user to enter it. Three wrong attempts end pairing with `rejected`.
+       - Without `symbols` the PIN is made of digits 0–9 (ikarus: shown on the first 4-digit display). The app shows a numeric field and sends e.g. `{"t":"pin","pin":"4821"}`.
+       - With `symbols` (e.g. `"symbols":["#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF"]`) the PIN is a sequence of those symbols and the device shows it its own way (coin-jar: LEDs blink the colors in order, repeatedly). Symbols starting with `#` are colors `#RRGGBB`; the app shows one button per symbol in that color and the user taps them in the order shown on the device. The app sends the indices of the tapped symbols as digits, e.g. tapped blue, red, red, yellow → `{"t":"pin","pin":"2003"}`.
+
+       ```json
+       {"t":"pairing","state":"waiting","method":"pin","timeout":60,"length":4,"symbols":["#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF"]}
+       ```
      - `confirm` – devices without a display. The user confirms on the device (e.g. a button). The app only shows "confirm on the device".
   4. Device generates a random token (32 hex chars), stores it and sends `{"t":"paired","token":"..."}`. Otherwise `pairing` with `timeout` or `rejected`.
 - The device keeps up to 4 tokens (one per phone); pairing a fifth replaces the oldest and disconnects the phone that used it.
@@ -180,6 +186,19 @@ The app implements one screen per `type`. Values not listed here are ignored by 
 | `button1`, `button2`, `button3` | event | `true` | buttons 1–3 pressed |
 
 Pairing method: `pin`. Displays are cleared when pairing ends.
+
+### `coin-jar`
+
+| id | Access | Value | Meaning |
+|---|---|---|---|
+| `coins` | get, set | int 0–1000000 | coins counted since startup; also sent as `event` on every coin; set `0` to reset (not persisted, resets on reboot) |
+| `volume` | get, set | int 0–32767 | chime volume (2000 after boot, 1000–6000 is a sensible range) |
+| `chime` | set | – | play the coin effect: gold LEDs and the chime (0.6 s) |
+| `barrier` | get | bool | light barrier passed the calibration at startup |
+| `sensor` | get | int 0–4095 | last phototransistor reading |
+| `baseline` | get | int 0–4095 | idle phototransistor value |
+
+Pairing method: `pin` with color symbols red, green, blue, yellow, purple (`#FF0000`, `#00FF00`, `#0000FF`, `#FFFF00`, `#FF00FF`). The LEDs blink 4 colors in order (0.6 s each, 0.25 s dark between them, 1.5 s pause before the sequence repeats) until pairing ends.
 
 ## ESP library
 
@@ -214,7 +233,7 @@ DeviceControl::notify("greenButton", true);
 
 - `get(id, Getter)` / `set(id, Setter)` take JSON callbacks; a setter returns `false` to reject the value (`err` `invalid`). `get<T>` / `set<T>` are typed shortcuts.
 - `notify(id)` sends the current getter value as `event`, `notify(id, value)` sends any value.
-- Pairing: `pairWithPin(show, hide)` for devices with a display, or `pairWithConfirm(start, stop)` plus `confirmPairing()` called by the project when the user confirms on the device.
+- Pairing: `pairWithPin(show, hide)` for devices with a display; `pairWithPin(show, hide, {symbols...})` for a PIN made of 2–10 symbols (e.g. colors), `show` receives the PIN as digits = symbol indices; or `pairWithConfirm(start, stop)` plus `confirmPairing()` called by the project when the user confirms on the device.
 - Ids are stored as pointers – pass string literals.
 
 Source layout:
@@ -280,7 +299,7 @@ Gotchas:
 3. Create the GitHub repository, tag `v0.1.0`, switch ikarus `lib_deps` from `symlink://` to the git URL.
 4. ~~Android app 0.1: discovery, pairing, ikarus screen~~ – implemented; test on a phone against ikarus.
 5. HMAC challenge–response.
-6. Roll out to coin-jar, infinity-cube-lamp, then gitlab-pipeline-semaphor (add their tables to [Device types](#device-types)).
+6. Roll out to ~~coin-jar~~ (done), infinity-cube-lamp, then gitlab-pipeline-semaphor (add their tables to [Device types](#device-types)).
 7. Later: WiFi provisioning from the app (fallback access point), BLE transport for ESP32, remote access via MQTT.
 
 ## Using this document with Claude Code in the Android project

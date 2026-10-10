@@ -119,8 +119,9 @@ void notify(const char* id, JsonVariantConst value) {
   Protocol::publish(id, value);
 }
 
-void pairWithPin(std::function<void(const char* pin)> show, std::function<void()> hide) {
-  Pairing::usePin(show, hide);
+void pairWithPin(std::function<void(const char* pin)> show, std::function<void()> hide,
+                 std::initializer_list<const char*> symbols) {
+  Pairing::usePin(show, hide, std::vector<const char*>(symbols));
 }
 
 void pairWithConfirm(std::function<void()> start, std::function<void()> stop) {
