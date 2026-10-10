@@ -1,0 +1,23 @@
+{
+  "name": "DeviceControl",
+  "version": "0.1.0",
+  "description": "Control ESP8266 and ESP32 devices from the Android app over WiFi (mDNS + WebSocket)",
+  "frameworks": "arduino",
+  "platforms": ["espressif8266", "espressif32"],
+  "dependencies": [
+    {
+      "owner": "esp32async",
+      "name": "ESPAsyncWebServer",
+      "version": "^3.12.1"
+    },
+    {
+      "owner": "bblanchon",
+      "name": "ArduinoJson",
+      "version": "^7.2.2"
+    },
+    {
+      "name": "OtaUpdater",
+      "version": "https://github.com/davidvancl/esp-ota-updater.git#v1.1.1"
+    }
+  ]
+}
