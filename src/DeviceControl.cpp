@@ -81,6 +81,15 @@ void cleanup() {
   }
 }
 
+void shareAuthorized() {
+  uint32_t clients[Config::MAX_CLIENTS] = {};
+  size_t length = 0;
+  for (const Session& session : Sessions::all()) {
+    if (session.used && session.authed) clients[length++] = session.client;
+  }
+  Transport::setAuthorized(clients, length);
+}
+
 }
 
 void begin(const char* name, const char* type) {
@@ -99,6 +108,7 @@ void loop() {
   expirePairing();
   dropUnauthorized();
   cleanup();
+  shareAuthorized();
   System::loop();
 }
 
@@ -126,6 +136,10 @@ void pairWithPin(std::function<void(const char* pin)> show, std::function<void()
 
 void pairWithConfirm(std::function<void()> start, std::function<void()> stop) {
   Pairing::useConfirm(start, stop);
+}
+
+void onData(std::function<void(const uint8_t* data, size_t length)> handler) {
+  Transport::onData(handler);
 }
 
 void confirmPairing() {

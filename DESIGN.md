@@ -66,6 +66,7 @@ Devices are identified by `id`, never by IP.
 - One WebSocket per app connection at `ws://<host>/ws`. Each text frame carries exactly one JSON object; frames larger than 512 bytes and fragmented frames are ignored.
 - The device accepts at most 3 clients at a time. A connection that is not authenticated is closed after 10 s, unless pairing is in progress on it.
 - Keepalive with WebSocket ping/pong every 15 s on both sides.
+- **Binary frames** carry raw data streams (e.g. audio). Only authenticated connections may send them; binary frames from other connections are dropped. The device passes the bytes in order to the project, frame and fragment boundaries have no meaning. What the data is and how a stream is started and stopped is defined per device type (usually by a `set` of a value, see [Device types](#device-types)). The device never sends binary frames.
 
 ## Protocol v1
 
@@ -197,6 +198,16 @@ Pairing method: `pin`. Displays are cleared when pairing ends.
 | `barrier` | get | bool | light barrier passed the calibration at startup |
 | `sensor` | get | int 0–4095 | last phototransistor reading |
 | `baseline` | get | int 0–4095 | idle phototransistor value |
+| `music` | get, set | bool | audio stream from the app is playing; set `true` to start, `false` to stop; also sent as `event` (`false`) when the device stops the stream after 3 s without data |
+| `musicBuffer` | get | int (ms) | audio buffered on the device; sent as `event` every 0.5 s while `music` is `true` |
+| binary frames | – | PCM | audio stream, see below |
+
+**Audio stream.** After `{"t":"set","id":"music","v":true}` the app sends the audio as binary frames: raw PCM, signed 16-bit little-endian, mono, 22050 Hz (44 100 bytes per second). The device buffers up to about 1.1 s (48 000 bytes), starts playing once 0.2 s is buffered, and plays the same signal on both speakers. The `volume` value scales the music the same way as the chime (32767 = full scale). While the music plays, a dropped coin only flashes the LEDs, without the chime.
+
+- The app must send in real time: about 100 ms of audio (4410 bytes) per frame, paced by the clock, aiming at 300–600 ms in `musicBuffer`. Send faster while `musicBuffer` is below 300 ms and pause while it is above 600 ms. Data that does not fit into the buffer is dropped.
+- When `musicBuffer` drops to 0 during playback, the device waits for 0.2 s of data again (a short gap instead of crackling).
+- To stop, send `{"t":"set","id":"music","v":false}`; the buffered audio is discarded. After 3 s without data the device stops by itself.
+- Starting the stream again (`true` while already playing) discards the buffer and starts over, e.g. for the next song.
 
 Pairing method: `pin` with color symbols red, green, blue, yellow, purple (`#FF0000`, `#00FF00`, `#0000FF`, `#FFFF00`, `#FF00FF`). The LEDs blink 4 colors in order (0.6 s each, 0.25 s dark between them, 1.5 s pause before the sequence repeats) until pairing ends.
 
@@ -241,7 +252,7 @@ Source layout:
 | File | Responsibility |
 |---|---|
 | `DeviceControl.h/.cpp` | public API, main loop, connection lifecycle |
-| `dc/Transport` | AsyncWebServer + WebSocket, queue of incoming events |
+| `dc/Transport` | AsyncWebServer + WebSocket, queue of incoming events, binary frames passed straight to the project for authorized clients |
 | `dc/Discovery` | mDNS announcement, WiFi reconnect |
 | `dc/Protocol` | message handling, replies, events |
 | `dc/Sessions` | connected clients and their auth state |

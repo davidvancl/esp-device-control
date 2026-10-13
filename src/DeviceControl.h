@@ -29,6 +29,8 @@ void pairWithConfirm(std::function<void()> start, std::function<void()> stop);
 
 void confirmPairing();
 
+void onData(std::function<void(const uint8_t* data, size_t length)> handler);
+
 template <typename T>
 void get(const char* id, std::function<T()> getter) {
   get(id, Getter([getter](JsonVariant out) { out.set(getter()); }));
