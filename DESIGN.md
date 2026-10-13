@@ -192,12 +192,16 @@ Pairing method: `pin`. Displays are cleared when pairing ends.
 
 | id | Access | Value | Meaning |
 |---|---|---|---|
-| `coins` | get, set | int 0–1000000 | coins counted since startup; also sent as `event` on every coin; set `0` to reset (not persisted, resets on reboot) |
+| `coins` | get, set | int 0–1000000 | total coin count, stored in NVS – survives reboots, power loss and OTA updates; also sent as `event` on every coin; set `0` to reset the counter, any other value to correct it (both are stored) |
 | `volume` | get, set | int 0–32767 | chime volume (2000 after boot, 1000–6000 is a sensible range) |
 | `chime` | set | – | play the coin effect: gold LEDs and the chime (0.6 s) |
 | `barrier` | get | bool | light barrier passed the calibration at startup |
 | `sensor` | get | int 0–4095 | last phototransistor reading |
 | `baseline` | get | int 0–4095 | idle phototransistor value |
+| `light` | get, set | bool | permanent light on the LEDs (off after boot); coin flash, pairing and startup effects return to it when they end |
+| `lightColors` | get, set | array of 5 `"#RRGGBB"` | color of each LED for the permanent light (`#FFA040` after boot); set accepts the array or a single `"#RRGGBB"` for all LEDs |
+| `brightness` | get, set | int 1–255 | brightness of all LED effects (80 after boot) |
+| `flashColor` | get, set | `"#RRGGBB"` | color of the LED flash when a coin drops in (`#FFA000` after boot) |
 | `music` | get, set | bool | audio stream from the app is playing; set `true` to start, `false` to stop; also sent as `event` (`false`) when the device stops the stream after 3 s without data |
 | `musicBuffer` | get | int (ms) | audio buffered on the device; sent as `event` every 0.5 s while `music` is `true` |
 | binary frames | – | PCM | audio stream, see below |
